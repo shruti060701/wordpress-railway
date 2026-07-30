@@ -1,0 +1,8 @@
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/wp-login.php"
+healthcheckTimeout = 120
+restartPolicyType = "always"
