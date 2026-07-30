@@ -11,7 +11,7 @@ Apply these settings in the Railway template composer when generating the templa
 ## 1. Healthcheck Settings
 
 ### `wordpress` (app service)
-- **Healthcheck Path:** `/wp-login.php` — always returns a real page (the login form) whether or not setup is complete, unlike `/` which redirects to the first-run installer on a fresh deploy. Verify empirically on first real deploy since WordPress's exact redirect behavior can vary by version.
+- **Healthcheck Path:** `/wp-admin/install.php` — confirmed live via a real test deploy to return `200` in both the pre-install state (fresh DB, no tables) and after setup is complete. `/wp-login.php` was tried first and rejected: it returns `302` on a fresh uninstalled site (redirects toward the installer), which every real deployer hits on their first deploy, and Railway's healthcheck requires `2xx`, not `3xx`, to pass.
 - **Healthcheck Timeout:** `120` seconds — needs to wait on the MySQL connection being ready, not just the PHP/Apache process starting.
 
 ### `MySQL`
@@ -66,7 +66,8 @@ WordPress itself has no application-level secret variable exposed the way Umami/
 
 - **Site URL mismatch after a domain change:** WordPress stores its site URL in the database and uses it to generate every internal link. If the Railway domain changes after initial setup (custom domain added later, for example), links, CSS, and images can break, and login can loop. This needs to be fixed from WordPress's own Settings → General (or the `wp_options` table directly for a locked-out instance), not something this template can prevent automatically.
 - **Upload failures on a fresh install:** the stock WordPress image ships with PHP's restrictive default `upload_max_filesize` (2MB) and `post_max_size`. This template's Dockerfile raises both to 64MB — if a deployer sees an upload error anyway, confirm the Dockerfile's `conf.d/uploads.ini` addition actually made it into the built image.
-- **Healthcheck path may need re-verification per WordPress version:** `/wp-login.php` was chosen because it reliably returns a real page whether or not first-run setup is complete, but confirm this is still true on whatever WordPress version is pinned at publish time, since redirect behavior has changed across major versions before.
+- **Apache "AH00534: More than one MPM loaded" crash (confirmed hit on a real deploy, not hypothetical):** the `wordpress:php8.x-apache` image's `mpm_event`/`mpm_worker` modules end up loaded alongside `mpm_prefork` specifically in Railway's runtime, a bug documented by other WordPress deployers on Railway's own community help station. A build-time-only `a2dismod`/`a2enmod` fix (a plain `RUN` step) was tested and did NOT resolve it, something in the container runtime re-enables the conflicting module after build. The working fix redoes the module toggle in the Dockerfile's `CMD`, immediately before `apache2-foreground` actually launches (see `Dockerfile`).
+- **Healthcheck path re-verification per WordPress version:** `/wp-admin/install.php` was chosen and confirmed live to return `200` in both install states, but re-confirm this on whatever WordPress version is pinned at publish time if significant time has passed, since core behavior has changed across major versions before.
 - **Floating `latest` tag risk:** avoided by pinning `wordpress:7.0.2-php8.3-apache`, verified against Docker Hub's tags API as the current numbered release matching `php8.3-apache`'s push date at authoring time. Re-verify this is still current before publishing if significant time has passed since authoring, WordPress ships security releases fairly often.
 
 ---
@@ -76,7 +77,7 @@ WordPress itself has no application-level secret variable exposed the way Umami/
 After the template is published, test-deploy from a fresh Railway account (incognito window) and verify:
 
 1. No "needs configuration" prompts appear for MySQL's auto-injected variables.
-2. Both services (`wordpress`, `MySQL`) come online and the app responds with a real `200` at `/wp-login.php`.
+2. Both services (`wordpress`, `MySQL`) come online and the app responds with a real `200` at `/wp-admin/install.php`.
 3. Open the actual Railway domain in a browser and complete the real first-run setup wizard (site title, admin account, email) — don't just curl the healthcheck endpoint.
 4. Upload a real media file larger than 2MB and confirm it succeeds, proving the raised upload limit actually took effect.
 5. Install a theme or plugin from the dashboard and confirm it activates successfully, proving `wp-content` write access via the mounted volume works correctly.
