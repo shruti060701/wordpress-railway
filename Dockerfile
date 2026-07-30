@@ -18,10 +18,16 @@ RUN { \
 # Real, documented Railway-specific bug (confirmed via Railway's own community
 # help station, multiple other WordPress deployers hit this exact error):
 # this image's mpm_event/mpm_worker modules end up loaded alongside
-# mpm_prefork in Railway's build environment, and Apache refuses to start
-# with more than one MPM active ("AH00534: More than one MPM loaded").
-# PHP's mod_php requires mpm_prefork specifically, so disable the other two
-# and enable prefork explicitly at build time.
+# mpm_prefork in Railway's container runtime, and Apache refuses to start
+# with more than one MPM active ("AH00534: More than one MPM loaded"). PHP's
+# mod_php requires mpm_prefork specifically. Toggling modules at BUILD time
+# alone (a2dismod/a2enmod as a plain RUN step) was tested and did NOT fix
+# this - something in the runtime container re-enables the conflicting
+# module after build. The confirmed-working fix (per Railway's own users
+# hitting this exact bug) is to redo the module toggle in the START COMMAND,
+# immediately before Apache actually launches.
 RUN a2dismod mpm_event mpm_worker || true && a2enmod mpm_prefork
 
 EXPOSE 80
+
+CMD ["/bin/bash", "-c", "a2dismod mpm_event mpm_worker || true; a2enmod mpm_prefork; exec docker-entrypoint.sh apache2-foreground"]
