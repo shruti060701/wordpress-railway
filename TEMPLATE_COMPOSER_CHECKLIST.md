@@ -34,15 +34,19 @@ Apply these settings in the Railway template composer when generating the templa
 
 ### `MySQL` Variables (Railway's standard managed database plugin)
 
+**Important, confirmed live via the actual composer screenshot (not the CLI, which flattens references into resolved strings and hides this):** Railway's MySQL plugin exposes two layers of variables. The no-underscore ones (`MYSQLDATABASE`, `MYSQLPASSWORD`, `MYSQLHOST`, `MYSQLPORT`, `MYSQLUSER`) are compatibility aliases that just template-reference the underscored ones (`MYSQL_DATABASE`, `MYSQL_ROOT_PASSWORD`, etc.) — **never overwrite the alias variables' values, they should stay as `${{MYSQL_DATABASE}}`-style references.** Only add a description to them. The underscored variables underneath are the ones that actually need a real value if the composer shows them as empty.
+
 | Variable | Value | Mark Optional? | Description |
 |----------|-------|-----------------|-------------|
 | `MYSQL_URL` | Auto-set by Railway's plugin — leave as is | No | Standard connection string. Not directly used by WordPress (which uses the individual `WORDPRESS_DB_*` params instead), but other tools/clients may expect it. |
-| `MYSQLHOST` | Auto-set by Railway's plugin — leave as is | No | Internal hostname — what `WORDPRESS_DB_HOST` actually connects through. |
-| `MYSQLPORT` | `3306` | No | Port MySQL listens on internally. **Verify this is actually filled in, not left as an empty "to be filled by the user" placeholder** — this exact composer glitch has recurred on this project's Umami and NocoDB templates for Postgres, verify it doesn't also happen for MySQL. |
+| `MYSQLHOST` | `${{RAILWAY_PRIVATE_DOMAIN}}` (reference, leave as is) | No | Internal hostname — what `WORDPRESS_DB_HOST` actually connects through. |
+| `MYSQLPORT` | `3306` | No | Port MySQL listens on internally. **Verify this is actually filled in, not left as an empty "to be filled by the user" placeholder** — this exact composer glitch has recurred on this project's Umami and NocoDB templates for Postgres. |
 | `MYSQLUSER` | `root` (Railway's own default) | No | Database username. |
-| `MYSQLDATABASE` | `railway` (Railway's own default) | **Yes** | Default database name created on startup. |
-| `MYSQLPASSWORD` | Whatever Railway's plugin actually prefills — **verify live via the composer screenshot, don't assume a specific length**. This exact wrong guess has already happened on multiple other templates in this project. | No | Auto-generated password. |
-| `MYSQL_ROOT_PASSWORD` | Same as `MYSQLPASSWORD` — verify live | No | Root password for the MySQL server itself. |
+| `MYSQLDATABASE` | `${{MYSQL_DATABASE}}` (reference — do NOT change to a literal value) | No | Default database name, mirrors `MYSQL_DATABASE` below. |
+| `MYSQL_DATABASE` | `railway` (Railway's own default) | **Yes** | The actual database name created on startup — this is the variable that needs a real value if shown empty, not `MYSQLDATABASE` above. |
+| `MYSQLPASSWORD` | `${{MYSQL_ROOT_PASSWORD}}` (reference — do NOT change to a literal value) | No | Password for connecting to MySQL, mirrors `MYSQL_ROOT_PASSWORD` below. |
+| `MYSQL_ROOT_PASSWORD` | Whatever Railway's plugin actually prefills (typically `${{secret(32, "...")}}`) — **verify live via the composer screenshot, don't assume a specific length**. This exact wrong guess has already happened on multiple other templates in this project. | No | Auto-generated root password for the MySQL server itself. |
+| `MYSQL_PUBLIC_URL` | Auto-set by Railway's plugin — leave as is | No | Public/external connection string for reaching this database from outside Railway's network. |
 
 ---
 
@@ -52,7 +56,7 @@ WordPress itself has no application-level secret variable exposed the way Umami/
 
 | Variable | Template Syntax |
 |----------|-----------------|
-| `MYSQLPASSWORD` | Whatever Railway's plugin already prefilled — verify live, don't assume a length |
+| `MYSQL_ROOT_PASSWORD` | Whatever Railway's plugin already prefilled (typically `${{secret(32, "...")}}`) — verify live, don't assume a length. `MYSQLPASSWORD` is just a reference to this, not a separate secret. |
 
 ---
 
