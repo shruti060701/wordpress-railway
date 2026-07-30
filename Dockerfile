@@ -15,4 +15,13 @@ RUN { \
     echo 'memory_limit = 256M'; \
   } >> /usr/local/etc/php/conf.d/uploads.ini
 
+# Real, documented Railway-specific bug (confirmed via Railway's own community
+# help station, multiple other WordPress deployers hit this exact error):
+# this image's mpm_event/mpm_worker modules end up loaded alongside
+# mpm_prefork in Railway's build environment, and Apache refuses to start
+# with more than one MPM active ("AH00534: More than one MPM loaded").
+# PHP's mod_php requires mpm_prefork specifically, so disable the other two
+# and enable prefork explicitly at build time.
+RUN a2dismod mpm_event mpm_worker || true && a2enmod mpm_prefork
+
 EXPOSE 80
