@@ -45,17 +45,17 @@ This template runs `wordpress:7.0.2-php8.3-apache`, verified as the newest actua
 
 ## Getting Started
 
-After deploying, give the healthcheck a moment to pass, WordPress needs its database connection confirmed before it's genuinely ready, not just the container starting.
+After deploying, give the healthcheck a moment to pass, WordPress needs its database connection confirmed before it's genuinely ready, not just the container starting. Then complete the setup wizard right away, before doing anything else. Until you do, the installer is reachable by anyone with your domain and no login required, standard WordPress behavior everywhere, but worth closing that window immediately rather than coming back to it later.
 
 Open your Railway domain and you'll land on WordPress's own five-minute setup screen: choose a site title, pick an admin username and a strong password (this becomes your only login, WordPress doesn't pre-create one for you), and enter an admin email for notifications. Submit that, and you're in the dashboard.
 
 From here, the real first move is picking a theme under Appearance, install one from the official directory or upload a custom one, and setting your permalink structure under Settings before you publish anything real. Changing permalinks later breaks any links you've already shared, so it's worth deciding early rather than accepting the default and fixing it after the fact.
 
-If you're building a store, install WooCommerce next and run through its own setup wizard, payment methods, shipping zones, tax settings, before adding real products. For anyone building a client site or anything with real traffic expected, install a caching plugin early too, WordPress's dynamic PHP rendering benefits significantly from page caching, and it's a much smaller job to set up before launch than to retrofit after.
+If you're building a store, install WooCommerce next and run through its own setup, payment methods, shipping zones, tax settings, before adding real products. For a client site or anything with real traffic expected, install a caching plugin early too, it's a much smaller job before launch than retrofitting after.
 
-One thing worth testing directly rather than assuming works: upload a real media file (an image over a few megabytes is a good test) and confirm it completes without an upload-limit error, this template raises the default limit specifically because the stock configuration trips up exactly this kind of test on a fresh install.
+One thing worth testing directly rather than assuming works: upload a real media file over a few megabytes and confirm it completes without an upload-limit error, this template raises the default limit specifically because the stock configuration trips up exactly this test on a fresh install.
 
-It's also worth checking Settings → General early and confirming your site URL matches your actual Railway domain exactly. WordPress stores this URL in its database and uses it to generate every internal link, get it wrong (say, by testing on one domain and later moving to another) and you'll see broken CSS, broken images, and login redirect loops that look like a bigger problem than they are.
+It's also worth checking Settings → General early and confirming your site URL matches your Railway domain exactly. WordPress stores this URL and uses it to generate every internal link, get it wrong and you'll see broken CSS, broken images, and login redirect loops that look like a bigger problem than they are.
 
 ## Why Deploy WordPress-Self-Hosted on Railway?
 

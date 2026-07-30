@@ -26,6 +26,7 @@ Deploy WordPress, the CMS that powers over 40% of the web, on Railway with one c
 
 - **Data persistence** — Media uploads, installed themes, and plugins live on the Railway volume mounted at `wp-content`. Your actual posts, pages, and settings live in the MySQL database. Both need to stay attached to survive redeploys.
 - **No pre-created admin account** — You create it yourself during the first-run setup wizard, in the browser, the first time you open the domain.
+- **Complete setup immediately after deploying** — Until you finish the setup wizard, WordPress's installer is reachable by anyone who has your domain, with no login required. Whoever submits it first becomes the site admin. This is standard WordPress behavior everywhere, not specific to this template, but it means the setup step isn't optional-when-convenient: do it right after your first deploy, before sharing the domain with anyone.
 - **Port** — Apache in the official image always listens on port 80 internally, this template sets `PORT=80` explicitly so Railway's edge routes correctly.
 - **Upload limits raised** — This template bumps `upload_max_filesize` and `post_max_size` to 64MB (the stock image ships with a much lower 2MB default), enough for most media uploads without extra config.
 
